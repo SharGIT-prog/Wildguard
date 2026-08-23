@@ -108,7 +108,7 @@ Define the base path to your raw source images:
 export WILDGUARD_ANIMALS_ROOT="/path/to/archive/animals/animals"
 
 # Windows (Command Prompt)
-set WILDGUARD_ANIMALS_ROOT="C:\Users\<USERNAME>\Downloads\wildguard_project\wildguard_project\archive\animals\animals"
+set WILDGUARD_ANIMALS_ROOT="path_to_animals\animals"
 
 ```
 
