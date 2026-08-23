@@ -1,0 +1,124 @@
+{
+  "validate": {
+    "n": 810,
+    "accuracy": 0.9024691358024691,
+    "precision": 0.9370629370629371,
+    "recall": 0.8145896656534954,
+    "f1": 0.8715447154471545,
+    "roc_auc": 0.9383124063975128,
+    "confusion_matrix": {
+      "labels": [
+        "safe(0)",
+        "leak(1)"
+      ],
+      "matrix": [
+        [
+          463,
+          18
+        ],
+        [
+          61,
+          268
+        ]
+      ]
+    }
+  },
+  "test": {
+    "n": 810,
+    "accuracy": 0.9049382716049382,
+    "precision": 0.9107692307692308,
+    "recall": 0.8604651162790697,
+    "f1": 0.8849028400597907,
+    "roc_auc": 0.9519038826230162,
+    "confusion_matrix": {
+      "labels": [
+        "safe(0)",
+        "leak(1)"
+      ],
+      "matrix": [
+        [
+          437,
+          29
+        ],
+        [
+          48,
+          296
+        ]
+      ]
+    }
+  },
+  "mixed_stress_test": {
+    "n": 4,
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confusion_matrix": {
+      "labels": [
+        "safe(0)",
+        "leak(1)"
+      ],
+      "matrix": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          4
+        ]
+      ]
+    }
+  },
+  "feature_importance": {
+    "caption_leak_score": 0.10173310339450836,
+    "has_iptc_description": 0.08953921496868134,
+    "has_thumbnail": 0.08878336101770401,
+    "metadata_block_count_norm": 0.08558836579322815,
+    "has_eof_trailing_bytes": 0.08011127263307571,
+    "caption_has_location_keyword": 0.07863631099462509,
+    "trailing_entropy": 0.07245835661888123,
+    "filename_leak_score": 0.0670541450381279,
+    "has_serial_number": 0.06076505407691002,
+    "has_camera_make": 0.05933263152837753,
+    "has_datetime_original": 0.05397656187415123,
+    "trailing_byte_count_norm": 0.05283784121274948,
+    "has_owner_name": 0.03959798812866211,
+    "has_gps": 0.02554941363632679,
+    "caption_has_distance_pattern": 0.014615923166275024,
+    "filename_entropy_norm": 0.006049035582691431,
+    "species_sensitivity": 0.003814157797023654,
+    "lsb_entropy_norm": 0.003745477646589279,
+    "lsb_variance": 0.0031280468683689833,
+    "lsb_mean_deviation": 0.0028243428096175194,
+    "lsb_variance_score": 0.0026303278282284737,
+    "png_chunk_count_norm": 0.0026121558621525764,
+    "app_segment_count_norm": 0.0025813153479248285,
+    "has_app_segments": 0.002035575220361352,
+    "has_gps_altitude": 0.0,
+    "has_gps_timestamp": 0.0,
+    "has_camera_model": 0.0,
+    "has_iptc_location": 0.0,
+    "has_iptc_creator": 0.0,
+    "has_iptc_keywords": 0.0,
+    "has_png_text_chunks": 0.0,
+    "description_contains_location": 0.0,
+    "keywords_contain_location": 0.0,
+    "gps_field_count_norm": 0.0,
+    "ocr_text_detected": 0.0,
+    "ocr_mean_confidence": 0.0,
+    "ocr_num_text_boxes_norm": 0.0,
+    "ocr_gps_regex_match": 0.0,
+    "ocr_camtrap_id_match": 0.0,
+    "ocr_location_keyword_match": 0.0,
+    "ocr_suspicious_token_count_norm": 0.0,
+    "filename_has_location_keyword": 0.0,
+    "filename_has_distance_pattern": 0.0,
+    "filename_has_coordinate_pattern": 0.0,
+    "caption_has_coordinate_pattern": 0.0,
+    "alpha_channel_variance": 0.0,
+    "suspicious_png_chunk_count_norm": 0.0
+  },
+  "train_rows": 3780,
+  "scale_pos_weight": 1.4909477521263668
+}

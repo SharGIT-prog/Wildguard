@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Version — WildGuard{% endblock %}
+{% block content %}
+<div class="hero fade-up">
+  <h1 class="hero__title">Version</h1>
+  <p class="hero__subtitle"><em>Is this image's embedded provenance valid, and has it been tampered with?</em></p>
+</div>
+
+<section class="panel upload-panel fade-up">
+  <form action="{{ url_for('version_verify') }}" method="post" enctype="multipart/form-data" class="upload-form">
+    <div class="upload-drop" id="upload-drop">
+      <input type="file" name="image" id="image-input" accept=".jpg,.jpeg,.png" required>
+      <div class="upload-drop__label">
+        <span class="upload-drop__icon">&#8613;</span>
+        <span>Drop a provenance-bearing image here, or click to choose a file</span>
+        <span class="upload-drop__hint">A file previously sanitized by WildGuard</span>
+      </div>
+      <span class="upload-drop__filename" id="upload-filename"></span>
+    </div>
+    <button type="submit" class="btn btn--primary">Verify Provenance</button>
+  </form>
+</section>
+
+{% if result %}
+<section class="results fade-up">
+
+  <div class="panel verify-panel verify-panel--{{ 'valid' if result.valid else 'invalid' }}">
+    <h2 class="verify-panel__headline">
+      {% if not result.provenance_found %}
+        NO PROVENANCE FOUND
+      {% elif result.valid %}
+        PROVENANCE VALID
+      {% else %}
+        PROVENANCE COMPROMISED
+      {% endif %}
+    </h2>
+    <p class="risk-panel__file">{{ result.upload_filename }}</p>
+    <ul class="factor-list">
+      {% for reason in result.reasons %}
+        <li>{{ reason }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if result.provenance_found %}
+  <div class="panel">
+    <h2 class="panel__heading">Provenance Chain</h2>
+    <div class="chain-diagram">
+      <div class="chain-diagram__node">Original Artifact<br><code>{{ result.recorded_parent_hash }}</code></div>
+      <div class="chain-diagram__arrow">&#8595;</div>
+      <div class="chain-diagram__node">Sanitized Artifact (recorded)<br><code>{{ result.recorded_artifact_hash }}</code></div>
+      <div class="chain-diagram__arrow">&#8595;</div>
+      <div class="chain-diagram__node">Current Uploaded File<br><code>{{ result.computed_container_hash }}</code></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="panel__heading">Hash Verification</h2>
+    <table class="hash-table">
+      <tr><td>Recorded artifact hash</td><td><code>{{ result.recorded_artifact_hash }}</code></td></tr>
+      <tr><td>Recomputed artifact hash (current file, marker stripped)</td><td><code>{{ result.computed_artifact_hash }}</code></td></tr>
+      <tr><td>Match</td><td class="{{ 'ok' if result.hash_match else 'fail' }}">{{ "YES" if result.hash_match else "NO" }}</td></tr>
+    </table>
+  </div>
+
+  {% if result.metadata_drift_flags %}
+  <div class="panel panel--warning">
+    <h2 class="panel__heading">Metadata Drift Detected</h2>
+    <ul class="factor-list">
+      {% for f in result.metadata_drift_flags %}<li>{{ f }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <details class="panel technical-details">
+    <summary>Embedded ledger (raw)</summary>
+    <pre class="feature-dump">{% for k, v in result.record.items() %}{{ "%-20s"|format(k) }} {{ v }}
+{% endfor %}</pre>
+  </details>
+  {% endif %}
+
+</section>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{
+  "thresholds": {
+    "safe_max": 30,
+    "review_max": 70,
+    "quarantine_min": 90
+  },
+  "weights": {
+    "model_probability": 0.40,
+    "deterministic_signals": 0.40,
+    "species_sensitivity": 0.20
+  },
+  "notes": "final_risk_score = 100 * (w_model*model_probability + w_deterministic*deterministic_signal_score + w_species*species_sensitivity), clipped to [0,100]. See policy/policy_engine.py for the exact composition logic and severity weighting per category."
+}

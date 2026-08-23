@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Analyse — WildGuard{% endblock %}
+{% block content %}
+<div class="hero fade-up">
+  <h1 class="hero__title">Analyse</h1>
+  <p class="hero__subtitle"><em>Is this image safe to share, and what privacy risks does it contain?</em></p>
+</div>
+
+{% if model_missing %}
+<div class="panel panel--warning fade-up">
+  <p>No trained model found yet. Checked exact path:</p>
+  <p><code>{{ model_path }}</code></p>
+  <p>Run <code>python -m model.train</code> from this same project directory, then reload this page.
+     If you already ran it, compare the "Model saved -&gt;" path it printed against the path above &mdash;
+     if they differ, you have two separate copies of the project and the dashboard/training are pointed
+     at different ones.</p>
+</div>
+{% endif %}
+
+<section class="panel upload-panel fade-up">
+  <form action="{{ url_for('analyse_scan') }}" method="post" enctype="multipart/form-data" class="upload-form" id="analyse-form">
+    <div class="upload-drop" id="upload-drop">
+      <input type="file" name="image" id="image-input" accept=".jpg,.jpeg,.png" required>
+      <div class="upload-drop__label">
+        <span class="upload-drop__icon">&#8613;</span>
+        <span>Drop an image here, or click to choose a file</span>
+        <span class="upload-drop__hint">JPEG or PNG &middot; processed entirely on this machine</span>
+      </div>
+      <span class="upload-drop__filename" id="upload-filename"></span>
+    </div>
+
+    <div class="field-row">
+      <label class="field">
+        <span class="field__label">Species <em>(optional — improves sensitivity scoring)</em></span>
+        <input type="text" name="species" placeholder="e.g. tiger, elephant, deer">
+      </label>
+      <label class="field">
+        <span class="field__label">Caption / comment <em>(optional)</em></span>
+        <input type="text" name="caption" placeholder="e.g. text you'd post alongside this photo">
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn--primary" id="scan-btn">Scan Image</button>
+    <div class="scan-progress" id="scan-progress">
+      <div class="scan-progress__bar"></div>
+      <span>Running forensics, OCR, context, and stego analysis…</span>
+    </div>
+  </form>
+</section>
+
+{% if result %}
+<section class="results fade-up">
+
+  <div class="panel risk-panel">
+    <div class="risk-panel__score">
+      <div class="risk-ring" data-score="{{ result.risk_score }}">
+        <svg viewBox="0 0 120 120">
+          <circle class="risk-ring__track" cx="60" cy="60" r="52"></circle>
+          <circle class="risk-ring__fill risk-ring__fill--{{ result.decision|lower }}" cx="60" cy="60" r="52"
+                  style="--target: {{ result.risk_score }};"></circle>
+        </svg>
+        <div class="risk-ring__label">
+          <span class="risk-ring__number" data-target="{{ result.risk_score }}">0</span>
+          <span class="risk-ring__max">/ 100</span>
+        </div>
+      </div>
+    </div>
+    <div class="risk-panel__meta">
+      <span class="status-badge status-badge--{{ result.decision|lower }}">{{ result.decision }}</span>
+      <p class="risk-panel__file">{{ result.upload_filename }}</p>
+      <p class="risk-panel__composition">
+        Model probability {{ result.model_probability }}% &middot;
+        deterministic signals {{ result.deterministic_signal_score }}% &middot;
+        species sensitivity {{ result.species_sensitivity }}%
+      </p>
+    </div>
+  </div>
+
+  <div class="panel category-panel">
+    <h2 class="panel__heading">Category Breakdown</h2>
+    <div class="category-grid">
+      {% for cv in result.category_verdicts %}
+      <div class="category-card category-card--{{ cv.level|lower }}">
+        <span class="category-card__name">
+          {{ {"metadata":"Explicit Metadata","ocr":"OCR Leakage","context":"Filename / Context",
+              "species":"Species Sensitivity","stego":"Steganography"}[cv.category] }}
+        </span>
+        <span class="category-card__level">{{ cv.level }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 class="panel__heading">Flagged Factors</h2>
+    {% if result.flagged_factors %}
+      <ul class="factor-list">
+        {% for factor in result.flagged_factors %}
+          <li>{{ factor }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No deterministic risk factors were flagged for this image.</p>
+    {% endif %}
+  </div>
+
+  {% if result.decision == "REVIEW" and not result.sanitized %}
+  <div class="panel panel--action">
+    <p>This image falls in the REVIEW range. It has not been automatically sanitized — you can choose to sanitize it anyway.</p>
+    <form action="{{ url_for('analyse_sanitize_manual') }}" method="post">
+      <input type="hidden" name="upload_path" value="{{ result.upload_path }}">
+      <input type="hidden" name="decision" value="{{ result.decision }}">
+      <input type="hidden" name="species" value="{{ result.species }}">
+      <input type="hidden" name="caption" value="{{ result.caption }}">
+      <button type="submit" class="btn btn--secondary">Sanitize Anyway</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if result.sanitized %}
+  <div class="panel panel--sanitized">
+    <h2 class="panel__heading">Sanitization &amp; Provenance</h2>
+    <p>Every applicable sanitization operation was applied regardless of what was individually detected: metadata/EXIF/IPTC/XMP stripped, all OCR-detected regions blurred, filename replaced, caption redacted.</p>
+    <a class="btn btn--primary" href="{{ url_for('download_sanitized', filename=result.sanitized_filename) }}">Download Sanitized Image</a>
+
+    <div class="hash-chain">
+      <div class="hash-chain__step">
+        <span class="hash-chain__label">Original (H0)</span>
+        <code>{{ result.original_hash }}</code>
+      </div>
+      <div class="hash-chain__arrow">&#8595;</div>
+      <div class="hash-chain__step">
+        <span class="hash-chain__label">Sanitized artifact (H1)</span>
+        <code>{{ result.artifact_hash }}</code>
+      </div>
+      <div class="hash-chain__arrow">&#8595;</div>
+      <div class="hash-chain__step">
+        <span class="hash-chain__label">Final container w/ embedded provenance (H2)</span>
+        <code>{{ result.container_hash }}</code>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <details class="panel technical-details">
+    <summary>Technical details</summary>
+    <div class="technical-grid">
+      <div>
+        <h3>OCR</h3>
+        {% if not result.ocr_engine_available %}
+          <p class="muted">OCR engine unavailable on this machine.</p>
+        {% elif result.ocr_hits %}
+          <ul>
+            {% for h in result.ocr_hits %}
+              <li>{{ h.label }}: "{{ h.text }}" @ bbox {{ h.bbox }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No suspicious OCR text detected.</p>
+        {% endif %}
+      </div>
+      <div>
+        <h3>Metadata tags found</h3>
+        {% if result.metadata_tags_found %}
+          <ul>{% for t in result.metadata_tags_found %}<li>{{ t }}</li>{% endfor %}</ul>
+        {% else %}
+          <p class="muted">None.</p>
+        {% endif %}
+      </div>
+      <div>
+        <h3>Steganography notes</h3>
+        {% if result.stego_notes %}
+          <ul>{% for n in result.stego_notes %}<li>{{ n }}</li>{% endfor %}</ul>
+        {% else %}
+          <p class="muted">Nothing notable.</p>
+        {% endif %}
+      </div>
+      <div>
+        <h3>Raw feature vector</h3>
+        <pre class="feature-dump">{% for k, v in result.feature_vector.items() %}{{ "%-32s"|format(k) }} {{ "%.3f"|format(v) }}
+{% endfor %}</pre>
+      </div>
+    </div>
+  </details>
+
+</section>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.WildGuard) window.WildGuard.initAnalysePage();
+  });
+</script>
+{% endblock %}
